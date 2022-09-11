@@ -8,4 +8,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Spotify.New.Releases.Application\Spotify.New.Releases.Application.csproj" />
+  </ItemGroup>
+
 </Project>
