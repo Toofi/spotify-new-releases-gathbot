@@ -13,7 +13,7 @@ namespace Spotify.New.Releases.API.Commands
 
         public static async Task InstallDiscordBot()
         {
-            var token = "MTAzNzQwNjkxMDQ3Mjc4NTkzMA.GaEG6x.hL66F2GkDxOtRXpnLHOBm0fY2T8PX8N60sd1yU";
+            var token = "";
 
             var _client = new DiscordSocketClient(new DiscordSocketConfig()
             {
