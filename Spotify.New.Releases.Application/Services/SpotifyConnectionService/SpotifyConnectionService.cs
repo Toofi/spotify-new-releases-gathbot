@@ -27,7 +27,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
                 Uri path = new Uri($"https://api.spotify.com/v1/browse/new-releases?country={country}&limit=50");
                 //HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, path);
 
-                string token = "BQDEBn9-JXk8wwHp50ChgTxhl7D7rLs8sChD4LvSbdVA4RMVTTBF8oRmHPyDWVn3o7Tg40bn9XF0OSPfgqYyr43fRJ-ZpBF42SYT3x26WcEgaoiZBvyDlm5a--ilpBTJNiVto14un6kj-h5UfvU75g6QTTJzdp2G7YWfil3l1BC7iw";
+                string token = "";
 
 
                 this.HttpClient.DefaultRequestHeaders.Accept.Clear();
@@ -49,7 +49,18 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
                 allReleases.AddRange(deserializedJson?.albums?.items);
             }
             //all the albums have to be different !
-            List<Item> filtered = allReleases.DistinctBy(release => release.href).ToList();
+            List<Item> filtered = allReleases.DistinctBy(release => release.id).ToList();
+            filtered.OrderBy(release => release.release_date);
+            Console.WriteLine(filtered);
+
+            foreach(Item release in filtered)
+            {
+                Uri path = new Uri($"https://api.spotify.com/v1/search?q=album%3A{release.name}%20artist%3A{release.artists.First().name}&type=album&limit=1");
+                HttpResponseMessage response = await this.HttpClient.GetAsync(path);
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                //requêter plutot sur https://api.spotify.com/v1/albums/7ywkrR5rlJ0Lj4jbsHVfU3
+            }
         }
 
         public List<string> JustSomeCountries = new List<string>()

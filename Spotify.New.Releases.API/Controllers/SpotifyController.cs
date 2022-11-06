@@ -1,8 +1,9 @@
 ﻿using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
+using System.Web.Mvc;
 
 namespace Spotify.New.Releases.API.Controllers
 {
-    public class SpotifyController
+    public class SpotifyController : Controller
     {
         private ISpotifyConnectionService _spotifyConnectionService { get; set; }
         public SpotifyController(ISpotifyConnectionService spotifyConnectionService)
@@ -13,6 +14,12 @@ namespace Spotify.New.Releases.API.Controllers
         public async Task SayHi()
         {
             await this._spotifyConnectionService.Connection();
+        }
+
+        [HttpGet]
+        public void GetLatestAlbums(string token)
+        {
+
         }
     }
 }
