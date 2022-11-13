@@ -2,6 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
 using System.Reflection;
 
 namespace Spotify.New.Releases.API.Commands
@@ -30,6 +31,7 @@ namespace Spotify.New.Releases.API.Commands
             IServiceProvider _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_commands)
+                .AddSingleton<ISpotifyConnectionService, SpotifyConnectionService>()
                 .BuildServiceProvider();
 
             _client.Log += Log;

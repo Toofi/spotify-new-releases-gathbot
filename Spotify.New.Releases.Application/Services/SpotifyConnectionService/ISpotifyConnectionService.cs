@@ -1,8 +1,9 @@
-﻿namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
+﻿using Discord;
+
+namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
 {
     public interface ISpotifyConnectionService
     {
-        public void HelloWorld();
-        public Task Connection();
+        public Task<EmbedBuilder> Connection();
     }
 }

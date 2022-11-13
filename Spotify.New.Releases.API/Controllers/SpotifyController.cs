@@ -11,7 +11,7 @@ namespace Spotify.New.Releases.API.Controllers
             this._spotifyConnectionService = spotifyConnectionService;
         }
 
-        public async Task SayHi()
+        public async Task GetLatestAlbums()
         {
             await this._spotifyConnectionService.Connection();
         }

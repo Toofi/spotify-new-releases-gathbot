@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Spotify.New.Releases.API.Controllers;
+﻿using Spotify.New.Releases.API.Controllers;
 using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
 using Spotify.New.Releases.API.Commands;
 
@@ -13,7 +12,6 @@ public class Program
         SpotifyController controller = new SpotifyController(spotifyConnectionService);
 
         await DiscordCommandHandler.InstallDiscordBot();
-
         await Task.Delay(-1);   
     }
 }
