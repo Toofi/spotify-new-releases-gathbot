@@ -13,7 +13,7 @@ namespace Spotify.New.Releases.API.Controllers
 
         public async Task GetLatestAlbums()
         {
-            await this._spotifyConnectionService.Connection();
+            await this._spotifyConnectionService.GetLatestRelease();
         }
 
         [HttpGet]
