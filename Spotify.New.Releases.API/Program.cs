@@ -1,18 +1,20 @@
-﻿using Spotify.New.Releases.API.Controllers;
-using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
+﻿using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
 using Spotify.New.Releases.API.Commands;
 using Discord.Commands;
 using Discord.WebSocket;
 using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using Microsoft.Extensions.Hosting;
+using Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundService;
 
 public class Program
 {
-    public static void Main(string[] args) => new Program().MainAsync().GetAwaiter().GetResult();
+    public static void Main(string[] args) => new Program().MainAsync(args).GetAwaiter().GetResult();
 
-    public async Task MainAsync()
+    public async Task MainAsync(string[] args)
     {
+        var builder = Host.CreateDefaultBuilder(args);
 
         var token = "";
 
@@ -34,9 +36,15 @@ public class Program
             .AddSingleton<ISpotifyConnectionService, SpotifyConnectionService>()
             .BuildServiceProvider();
 
+        builder.ConfigureServices(services => 
+            services
+            .AddHostedService<SpotifyReleasesBackgroundService>()
+            .AddSingleton(_discordSocketClient)
+            .AddSingleton(_commands)
+            .AddSingleton<ISpotifyConnectionService, SpotifyConnectionService>());
+
         _discordSocketClient.Log += DiscordCommandHandler.Log;
         _discordSocketClient.MessageReceived += HandleCommandAsync;
-
         await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
         foreach (var module in _commands.Modules)
         {
@@ -62,6 +70,7 @@ public class Program
                 await context.Channel.SendMessageAsync(result.ErrorReason);
             }
         }
+        builder.Build().Run();
         await Task.Delay(-1);   
     }
 }

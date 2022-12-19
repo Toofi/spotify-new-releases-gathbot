@@ -16,8 +16,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
         }
         public async Task<EmbedBuilder> GetLatestRelease()
         {
-            SpotifyToken token = await this.GetSpotifyToken();
-            List<Item> allReleases = await this.GetAllReleases(token);
+            List<Item> allReleases = await this.GetAllRawReleases();
             Item latestRelease = allReleases.FirstOrDefault();
             if (latestRelease != null)
             {
@@ -30,15 +29,20 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
 
         public async Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber)
         {
-            SpotifyToken token = await this.GetSpotifyToken();
-            List<Item> allReleases = await this.GetAllReleases(token);
-            List<EmbedBuilder> latestDiscordReleases = new List<EmbedBuilder>();
-            for (int i = 0; i < releasesNumber; i++)
+            List<Item> allReleases = await this.GetAllRawReleases();
+            List<EmbedBuilder> latestDiscordReleases = new List<EmbedBuilder>((int)releasesNumber);
+            for (int i = 0; i <= releasesNumber; i++)
             {
                 EmbedBuilder embeddedRelease = this.CreateEmbeddedRelease(allReleases.ElementAt(i));
                 latestDiscordReleases.Add(embeddedRelease);
             }
             return latestDiscordReleases;
+        }
+
+        public async Task<List<Item>> GetAllRawReleases()
+        {
+            SpotifyToken token = await this.GetSpotifyToken();
+            return await this.GetAllReleases(token);
         }
 
         private EmbedBuilder CreateEmbeddedRelease(Item release)
