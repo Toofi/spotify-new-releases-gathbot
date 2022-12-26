@@ -6,6 +6,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
     public interface ISpotifyConnectionService
     {
         public Task<EmbedBuilder> GetLatestRelease();
+        public Task<List<Item>> GetAllRawReleases();
         public Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber);
     }
 }
