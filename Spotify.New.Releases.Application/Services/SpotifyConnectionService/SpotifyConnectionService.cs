@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Spotify.New.Releases.Domain.Models.Spotify;
+using Spotify.New.Releases.Infrastructure.Repositories;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -9,15 +10,18 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
     public class SpotifyConnectionService : ISpotifyConnectionService
     {
         private readonly HttpClient HttpClient;
+        private readonly IGenericRepository<Item> _albumsRepository;
 
-        public SpotifyConnectionService()
+        public SpotifyConnectionService(IGenericRepository<Item> albumsRepository)
         {
             this.HttpClient = new HttpClient();
+            this._albumsRepository = albumsRepository;
         }
+
         public async Task<EmbedBuilder> GetLatestRelease()
         {
-            List<Item> allReleases = await this.GetAllRawReleases();
-            Item latestRelease = allReleases.FirstOrDefault();
+            List<Item> latestReleases = await this.GetAllReleases(1);
+            Item latestRelease = latestReleases.FirstOrDefault();
             if (latestRelease != null)
             {
                 EmbedBuilder embedded = this.CreateEmbeddedRelease(latestRelease);
@@ -29,7 +33,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
 
         public async Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber)
         {
-            List<Item> allReleases = await this.GetAllRawReleases();
+            List<Item> allReleases = await this.GetAllReleases(releasesNumber);
             List<EmbedBuilder> latestDiscordReleases = new List<EmbedBuilder>((int)releasesNumber);
             for (int i = 0; i <= releasesNumber; i++)
             {
@@ -37,12 +41,6 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
                 latestDiscordReleases.Add(embeddedRelease);
             }
             return latestDiscordReleases;
-        }
-
-        public async Task<List<Item>> GetAllRawReleases()
-        {
-            SpotifyToken token = await this.GetSpotifyToken();
-            return await this.GetAllReleases(token);
         }
 
         private EmbedBuilder CreateEmbeddedRelease(Item release)
@@ -79,10 +77,11 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
             }
         }
 
-        private async Task<List<Item>> GetLastReleasesBy(string country, SpotifyToken token)
+        private async Task<List<Item>> GetLastReleasesByCountry(string country, SpotifyToken token, uint limit)
         {
             //la limite est aux 50 dernières albums
-            Uri path = new Uri($"https://api.spotify.com/v1/browse/new-releases?country={country}&limit=50");
+            if (limit > 50) limit = 50;
+            Uri path = new Uri($"https://api.spotify.com/v1/browse/new-releases?country={country}&limit={(int)limit}");
 
 
             this.HttpClient.DefaultRequestHeaders.Accept.Clear();
@@ -101,15 +100,16 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
             return deserializedJson?.albums?.items;
         }
 
-        private async Task<List<Item>> GetAllReleases(SpotifyToken token)
+        public async Task<List<Item>> GetAllReleases(uint limit)
         {
-            //ajotuer un guard, qui renvoie une exception perso pour le token pété
+            SpotifyToken token = await this.GetSpotifyToken();
             List<Item> allReleases = new List<Item>();
             try
             {
-                foreach (string country in JustSomeCountries)
+                foreach (string country in countries)
                 {
-                    allReleases = await this.GetLastReleasesBy(country, token);
+                    List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token, limit);
+                    allReleases.AddRange(receivedReleases);
                 }
             }
             catch (Exception exception)
@@ -118,6 +118,21 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
                 throw;
             }
             return allReleases.DistinctBy(release => release.id).OrderBy(release => release.release_date).Reverse().ToList();
+        }
+
+        public async Task AddIfNew(Item release)
+        {
+            if (!await this.IsReleaseAlreadyExisting(release.id))
+            {
+                await this._albumsRepository.AddAsync(release);
+                Console.WriteLine($"added release ${release.id}");
+            }
+        }
+
+        private async Task<bool> IsReleaseAlreadyExisting(string releaseId)
+        {
+            Item release = await this._albumsRepository.GetByIdAsync(releaseId);
+            return release != null;
         }
 
         private FormUrlEncodedContent GetRequestBody()

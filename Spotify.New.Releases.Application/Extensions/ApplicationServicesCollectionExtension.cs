@@ -9,8 +9,8 @@ namespace Spotify.New.Releases.Application.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             return services
-            .AddHostedService<SpotifyReleasesBackgroundService>()
-            .AddSingleton<ISpotifyConnectionService, SpotifyConnectionService>();
+                .AddSingleton<ISpotifyConnectionService, SpotifyConnectionService>()
+                .AddHostedService<SpotifyReleasesBackgroundService>();
         }
     }
 }

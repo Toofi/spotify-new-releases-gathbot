@@ -33,7 +33,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
             var count = Interlocked.Increment(ref executionCount);
             _logger.LogInformation("{datetime} - {service} is working. Count: {count}", 
                 DateTimeOffset.Now, 
-                nameof(SpotifyReleasesBackgroundService), 
+                nameof(SpotifyReleasesBackgroundService),
                 count);
 
             _ = GetLatestReleases();
@@ -43,12 +43,15 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         {
             try
             {
-                List<Item> rawReleases = await this._spotifyConnectionService.GetAllRawReleases();
+                List<Item> rawReleases = await this._spotifyConnectionService.GetAllReleases();
                 _logger.LogInformation("{datetime} - {service} - Successfully received raw data from Spotify. Number of releases received: {count}",
                     DateTimeOffset.Now,
                     nameof(SpotifyReleasesBackgroundService),
                     rawReleases.Count);
-                await this._albumsRepository.AddAsync(rawReleases.First());
+                foreach(Item release in rawReleases)
+                {
+                    this._spotifyConnectionService.AddIfNew(release);
+                }
             }
             catch (Exception error)
             {

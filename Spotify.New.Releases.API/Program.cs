@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using spotify_new_releases;
 
@@ -9,10 +8,9 @@ public class Program
 
     public async Task MainAsync(string[] args)
     {
-        IServiceCollection services = new ServiceCollection().ConfigureServices();
         Action<IServiceCollection> servicesDelegate = services => services.ConfigureServices();
         IHostBuilder builder = Host.CreateDefaultBuilder(args).ConfigureServices(servicesDelegate);
         builder.Build().Run();
-        await Task.Delay(-1);   
+        await Task.Delay(-1);
     }
 }
