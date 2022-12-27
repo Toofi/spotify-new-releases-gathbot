@@ -19,10 +19,10 @@ namespace Spotify.New.Releases.Infrastructure.Extensions
                 {
                     EndPoints = { "redis-16050.c269.eu-west-1-3.ec2.cloud.redislabs.com:16050" },
                     Password = "",
-                    User = "default"
+                    User = "default",
+                    AbortOnConnectFail = false,
                 });
-
-            return services.AddSingleton(redisConnection);
+            return services.AddSingleton<IConnectionMultiplexer>(redisConnection);
         }
     }
 }

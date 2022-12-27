@@ -1,24 +1,22 @@
 ﻿using Spotify.New.Releases.Domain.Models.Spotify;
 using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Spotify.New.Releases.Infrastructure.Repositories
 {
     public class AlbumsRepository : IGenericRepository<Item>
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer;
+        private readonly IDatabase _database;
         public AlbumsRepository(IConnectionMultiplexer connectionMultiplexer)
         {
             _connectionMultiplexer = connectionMultiplexer;
+            this._database = this._connectionMultiplexer.GetDatabase();
         }
         public async Task AddAsync(Item entity)
         {
-            IDatabase db = this._connectionMultiplexer.GetDatabase();
-            bool result = await db.StringSetAsync(entity.id, "coucou");
+            string value = JsonSerializer.Serialize(entity);
+            bool result = await this._database.StringSetAsync(entity.id, value);
         }
 
         public async Task DeleteAsync(Item entity)
@@ -33,8 +31,11 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
 
         public async Task<Item> GetByIdAsync(string id)
         {
-            IDatabase db = this._connectionMultiplexer.GetDatabase();
-            var result = await db.StringGetAsync(id);
+            RedisValue result = await this._database.StringGetAsync(id);
+            if (result.HasValue)
+            {
+                return JsonSerializer.Deserialize<Item>(result);
+            }
             return null;
         }
 
