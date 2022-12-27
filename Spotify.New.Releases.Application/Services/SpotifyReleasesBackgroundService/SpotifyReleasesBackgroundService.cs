@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
 using Spotify.New.Releases.Domain.Models.Spotify;
+using Spotify.New.Releases.Infrastructure.Repositories;
 
 namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundService
 {
@@ -10,12 +11,14 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         private int executionCount = 0;
         private readonly ILogger<SpotifyReleasesBackgroundService> _logger;
         private Timer? _timer = null;
-        private ISpotifyConnectionService _spotifyConnectionService;
+        private readonly ISpotifyConnectionService _spotifyConnectionService;
+        private readonly IGenericRepository<Item> _albumsRepository;
 
-        public SpotifyReleasesBackgroundService(ILogger<SpotifyReleasesBackgroundService> logger, ISpotifyConnectionService spotifyConnectionService)
+        public SpotifyReleasesBackgroundService(ILogger<SpotifyReleasesBackgroundService> logger, ISpotifyConnectionService spotifyConnectionService, IGenericRepository<Item> albumsRepository)
         {
             _logger = logger;
             _spotifyConnectionService = spotifyConnectionService;
+            _albumsRepository = albumsRepository;
         }
         public Task StartAsync(CancellationToken stoppingToken)
         {
@@ -30,7 +33,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
             var count = Interlocked.Increment(ref executionCount);
             _logger.LogInformation("{datetime} - {service} is working. Count: {count}", 
                 DateTimeOffset.Now, 
-                nameof(SpotifyReleasesBackgroundService), 
+                nameof(SpotifyReleasesBackgroundService),
                 count);
 
             _ = GetLatestReleases();
@@ -40,11 +43,15 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         {
             try
             {
-                List<Item> rawReleases = await this._spotifyConnectionService.GetAllRawReleases();
+                List<Item> rawReleases = await this._spotifyConnectionService.GetAllReleases();
                 _logger.LogInformation("{datetime} - {service} - Successfully received raw data from Spotify. Number of releases received: {count}",
                     DateTimeOffset.Now,
                     nameof(SpotifyReleasesBackgroundService),
                     rawReleases.Count);
+                foreach(Item release in rawReleases)
+                {
+                    this._spotifyConnectionService.AddIfNew(release);
+                }
             }
             catch (Exception error)
             {
