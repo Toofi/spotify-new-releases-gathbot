@@ -26,9 +26,9 @@ namespace spotify_new_releases.Extensions
 
             _discordSocketClient.Log += DiscordCommandHandler.Log;
             _discordSocketClient.MessageReceived += HandleCommandAsync;
+            _discordSocketClient.Ready += HandleNotificationsAsync;
             await _discordCommands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
-            _discordSocketClient.Ready += HandleNotificationsAsync;
             foreach (var module in _discordCommands.Modules)
             {
                 Console.WriteLine($"{nameof(DiscordCommandHandler)} | Command '{module.Name}' initialized.");
@@ -36,7 +36,6 @@ namespace spotify_new_releases.Extensions
             var discordToken = "";
             await _discordSocketClient.LoginAsync(TokenType.Bot, discordToken);
             await _discordSocketClient.StartAsync();
-
 
             async Task HandleNotificationsAsync()
             {
@@ -49,7 +48,6 @@ namespace spotify_new_releases.Extensions
                     if (channel != null)
                     {
                         await channel.SendMessageAsync("I am alive !");
-
                     }
                 }
             }

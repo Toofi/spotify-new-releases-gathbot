@@ -43,7 +43,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
             return latestDiscordReleases;
         }
 
-        private EmbedBuilder CreateEmbeddedRelease(Item release)
+        public EmbedBuilder CreateEmbeddedRelease(Item release)
         {
             return new EmbedBuilder()
                    .WithAuthor(release.artists.First().name)
@@ -120,19 +120,10 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
             return allReleases.DistinctBy(release => release.id).OrderBy(release => release.release_date).Reverse().ToList();
         }
 
-        public async Task AddIfNew(Item release)
+        public async Task Add(Item release)
         {
-            if (!await this.IsReleaseAlreadyExisting(release.id))
-            {
-                await this._albumsRepository.AddAsync(release);
-                Console.WriteLine($"added release ${release.id}");
-            }
-        }
-
-        private async Task<bool> IsReleaseAlreadyExisting(string releaseId)
-        {
-            Item release = await this._albumsRepository.GetByIdAsync(releaseId);
-            return release != null;
+            await this._albumsRepository.AddAsync(release);
+            Console.WriteLine($"added release ${release.id}");
         }
 
         private FormUrlEncodedContent GetRequestBody()
