@@ -26,6 +26,7 @@ namespace spotify_new_releases.Extensions
 
             _discordSocketClient.Log += DiscordCommandHandler.Log;
             _discordSocketClient.MessageReceived += HandleCommandAsync;
+            _discordSocketClient.Ready += HandleNotificationsAsync;
             await _discordCommands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
             foreach (var module in _discordCommands.Modules)
@@ -35,6 +36,21 @@ namespace spotify_new_releases.Extensions
             var discordToken = "";
             await _discordSocketClient.LoginAsync(TokenType.Bot, discordToken);
             await _discordSocketClient.StartAsync();
+
+            async Task HandleNotificationsAsync()
+            {
+                var guilds = _discordSocketClient.Guilds;
+
+                // Iterate through each guild
+                foreach (var guild in guilds)
+                {
+                    var channel = guild.TextChannels?.FirstOrDefault(channel => channel.GetChannelType() == ChannelType.Text);
+                    if (channel != null)
+                    {
+                        await channel.SendMessageAsync("I am alive !");
+                    }
+                }
+            }
 
             async Task HandleCommandAsync(SocketMessage message)
             {

@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Discord;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Spotify.New.Releases.Application.Services.DiscordMessagesService;
 using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
 using Spotify.New.Releases.Domain.Models.Spotify;
 using Spotify.New.Releases.Infrastructure.Repositories;
+using System.Net.NetworkInformation;
 
 namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundService
 {
@@ -13,13 +16,20 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         private Timer? _timer = null;
         private readonly ISpotifyConnectionService _spotifyConnectionService;
         private readonly IGenericRepository<Item> _albumsRepository;
+        private readonly IDiscordMessagesService _discordMessagesService;
 
-        public SpotifyReleasesBackgroundService(ILogger<SpotifyReleasesBackgroundService> logger, ISpotifyConnectionService spotifyConnectionService, IGenericRepository<Item> albumsRepository)
+        public SpotifyReleasesBackgroundService(
+            ILogger<SpotifyReleasesBackgroundService> logger,
+            ISpotifyConnectionService spotifyConnectionService,
+            IGenericRepository<Item> albumsRepository,
+            IDiscordMessagesService discordMessagesService)
         {
             _logger = logger;
             _spotifyConnectionService = spotifyConnectionService;
             _albumsRepository = albumsRepository;
+            _discordMessagesService = discordMessagesService;
         }
+
         public Task StartAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("{datetime} - {service} running.", DateTimeOffset.Now, nameof(SpotifyReleasesBackgroundService));
@@ -48,10 +58,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
                     DateTimeOffset.Now,
                     nameof(SpotifyReleasesBackgroundService),
                     rawReleases.Count);
-                foreach(Item release in rawReleases)
-                {
-                    this._spotifyConnectionService.AddIfNew(release);
-                }
+                await this.AddNewReleases(rawReleases);
             }
             catch (Exception error)
             {
@@ -76,6 +83,25 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         public void Dispose()
         {
             _timer?.Dispose();
+        }
+
+        private async Task AddNewReleases(List<Item> releases)
+        {
+            foreach (Item release in releases)
+            {
+                if (!await this.IsReleaseAlreadyExisting(release.id))
+                {
+                    await this._spotifyConnectionService.Add(release);
+                    EmbedBuilder embeddedRelease = this._spotifyConnectionService.CreateEmbeddedRelease(release);
+                    await this._discordMessagesService.SendEmbeddedMessageToAllGuildsAsync(embeddedRelease);
+                }
+            }
+        }
+
+        private async Task<bool> IsReleaseAlreadyExisting(string releaseId)
+        {
+            Item release = await this._albumsRepository.GetByIdAsync(releaseId);
+            return release != null;
         }
     }
 }

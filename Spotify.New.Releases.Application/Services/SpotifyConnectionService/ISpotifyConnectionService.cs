@@ -8,6 +8,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
         public Task<EmbedBuilder> GetLatestRelease();
         public Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber);
         public Task<List<Item>> GetAllReleases(uint limit = 50);
-        public Task AddIfNew(Item release);
+        public Task Add(Item release);
+        public EmbedBuilder CreateEmbeddedRelease(Item release);
     }
 }
