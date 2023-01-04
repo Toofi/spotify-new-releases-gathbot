@@ -2,10 +2,9 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Spotify.New.Releases.Application.Services.DiscordMessagesService;
-using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
+using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 using Spotify.New.Releases.Domain.Models.Spotify;
 using Spotify.New.Releases.Infrastructure.Repositories;
-using System.Net.NetworkInformation;
 
 namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundService
 {
@@ -14,13 +13,13 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         private int executionCount = 0;
         private readonly ILogger<SpotifyReleasesBackgroundService> _logger;
         private Timer? _timer = null;
-        private readonly ISpotifyConnectionService _spotifyConnectionService;
+        private readonly ISpotifyReleasesService _spotifyConnectionService;
         private readonly IGenericRepository<Item> _albumsRepository;
         private readonly IDiscordMessagesService _discordMessagesService;
 
         public SpotifyReleasesBackgroundService(
             ILogger<SpotifyReleasesBackgroundService> logger,
-            ISpotifyConnectionService spotifyConnectionService,
+            ISpotifyReleasesService spotifyConnectionService,
             IGenericRepository<Item> albumsRepository,
             IDiscordMessagesService discordMessagesService)
         {

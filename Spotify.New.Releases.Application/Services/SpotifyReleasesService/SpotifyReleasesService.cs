@@ -5,14 +5,14 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
+namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
 {
-    public class SpotifyConnectionService : ISpotifyConnectionService
+    public class SpotifyReleasesService : ISpotifyReleasesService
     {
         private readonly HttpClient HttpClient;
         private readonly IGenericRepository<Item> _albumsRepository;
 
-        public SpotifyConnectionService(IGenericRepository<Item> albumsRepository)
+        public SpotifyReleasesService(IGenericRepository<Item> albumsRepository)
         {
             this.HttpClient = new HttpClient();
             this._albumsRepository = albumsRepository;

@@ -1,9 +1,9 @@
 ﻿using Discord;
 using Spotify.New.Releases.Domain.Models.Spotify;
 
-namespace Spotify.New.Releases.Application.Services.SpotifyConnectionService
+namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
 {
-    public interface ISpotifyConnectionService
+    public interface ISpotifyReleasesService
     {
         public Task<EmbedBuilder> GetLatestRelease();
         public Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber);
