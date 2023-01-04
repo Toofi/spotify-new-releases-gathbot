@@ -1,12 +1,12 @@
-﻿using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
+﻿using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 using System.Web.Mvc;
 
 namespace Spotify.New.Releases.API.Controllers
 {
     public class SpotifyController : Controller
     {
-        private ISpotifyConnectionService _spotifyConnectionService { get; set; }
-        public SpotifyController(ISpotifyConnectionService spotifyConnectionService)
+        private ISpotifyReleasesService _spotifyConnectionService { get; set; }
+        public SpotifyController(ISpotifyReleasesService spotifyConnectionService)
         {
             this._spotifyConnectionService = spotifyConnectionService;
         }

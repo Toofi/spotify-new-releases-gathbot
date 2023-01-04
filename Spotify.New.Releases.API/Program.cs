@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using spotify_new_releases;
+using Spotify.New.Releases.Application.Extensions;
+using Spotify.New.Releases.Infrastructure.Extensions;
+using spotify_new_releases.Extensions;
 
 public class Program
 {
@@ -8,7 +10,12 @@ public class Program
 
     public async Task MainAsync(string[] args)
     {
-        Action<IServiceCollection> servicesDelegate = services => services.ConfigureServices();
+        Action<IServiceCollection> servicesDelegate = services => 
+            services.AddRedisConnection()
+                    .AddInfrastructureRepositories()
+                    .AddApplicationServices()
+                    .AddDiscordBot().Result
+                    .AddCustomOpenApi();
         IHostBuilder builder = Host.CreateDefaultBuilder(args).ConfigureServices(servicesDelegate);
         builder.Build().Run();
         await Task.Delay(-1);

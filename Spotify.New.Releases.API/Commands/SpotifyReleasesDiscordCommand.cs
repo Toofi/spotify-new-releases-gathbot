@@ -1,14 +1,14 @@
 ﻿using Discord;
 using Discord.Commands;
-using Spotify.New.Releases.Application.Services.SpotifyConnectionService;
+using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 
 namespace Spotify.New.Releases.API.Commands
 {
     public class SpotifyReleasesDiscordCommand : ModuleBase<SocketCommandContext>
     {
-        private ISpotifyConnectionService _spotifyConnectionService { get; set; }
+        private ISpotifyReleasesService _spotifyConnectionService { get; set; }
 
-        public SpotifyReleasesDiscordCommand(ISpotifyConnectionService spotifyConnectionService)
+        public SpotifyReleasesDiscordCommand(ISpotifyReleasesService spotifyConnectionService)
         {
             this._spotifyConnectionService = spotifyConnectionService;
         }
@@ -23,7 +23,6 @@ namespace Spotify.New.Releases.API.Commands
         public async Task Latest(string number)
         {
             await Context.Message.ReplyAsync($"Looking for {number} latest releases ...");
-            //faire une policy pour ce process selon le client, ici discord
             bool uintParsed = uint.TryParse(number, out uint parsedNumber);
             if (parsedNumber == 0 || parsedNumber == null)
             {

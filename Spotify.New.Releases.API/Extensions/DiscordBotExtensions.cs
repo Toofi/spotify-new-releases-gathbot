@@ -4,10 +4,11 @@ using Discord;
 using Microsoft.Extensions.DependencyInjection;
 using Spotify.New.Releases.API.Commands;
 using System.Reflection;
+using RunMode = Discord.Commands.RunMode;
 
 namespace spotify_new_releases.Extensions
 {
-    public static class ApiServicesExtension
+    public static class DiscordBotExtensions
     {
         public static async Task<IServiceCollection> AddDiscordBot(this IServiceCollection services)
         {
@@ -39,17 +40,9 @@ namespace spotify_new_releases.Extensions
 
             async Task HandleNotificationsAsync()
             {
-                var guilds = _discordSocketClient.Guilds;
-
-                // Iterate through each guild
-                foreach (var guild in guilds)
-                {
-                    var channel = guild.TextChannels?.FirstOrDefault(channel => channel.GetChannelType() == ChannelType.Text);
-                    if (channel != null)
-                    {
-                        await channel.SendMessageAsync("I am alive !");
-                    }
-                }
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("The discord bot is ready to send notifications.");
+                Console.ForegroundColor = ConsoleColor.White;
             }
 
             async Task HandleCommandAsync(SocketMessage message)
