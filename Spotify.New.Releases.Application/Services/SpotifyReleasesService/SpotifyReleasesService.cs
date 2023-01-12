@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using Microsoft.Extensions.Logging;
+using Spotify.New.Releases.Domain.Enums;
 using Spotify.New.Releases.Domain.Models.Spotify;
 using Spotify.New.Releases.Infrastructure.Repositories;
 using System.Net.Http.Headers;
@@ -11,82 +12,80 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
     {
         private readonly HttpClient HttpClient;
         private readonly IGenericRepository<Item> _albumsRepository;
+        private readonly ILogger<SpotifyReleasesService> _logger;
 
-        public SpotifyReleasesService(IGenericRepository<Item> albumsRepository)
+        public SpotifyReleasesService(IGenericRepository<Item> albumsRepository, ILogger<SpotifyReleasesService> logger)
         {
             this.HttpClient = new HttpClient();
             this._albumsRepository = albumsRepository;
+            this._logger = logger;
         }
 
-        public async Task<EmbedBuilder> GetLatestRelease()
+        public async Task<Item> GetLatestRelease()
         {
-            List<Item> latestReleases = await this.GetAllReleases(1);
+            List<Item> latestReleases = await this.GetLatestReleases(1);
             Item latestRelease = latestReleases.FirstOrDefault();
-            if (latestRelease != null)
-            {
-                EmbedBuilder embedded = this.CreateEmbeddedRelease(latestRelease);
-
-                return embedded;
-            }
-            return null;
+            return latestRelease ?? null;
         }
 
-        public async Task<List<EmbedBuilder>> GetLatestReleases(uint releasesNumber)
+        public async Task<List<Item>> GetLatestReleases(uint releasesNumber = 50)
         {
-            List<Item> allReleases = await this.GetAllReleases(releasesNumber);
-            List<EmbedBuilder> latestDiscordReleases = new List<EmbedBuilder>((int)releasesNumber);
-            for (int i = 0; i <= releasesNumber; i++)
+            SpotifyToken token = await this.GetSpotifyToken();
+            List<Item> allReleases = new List<Item>();
+            try
             {
-                EmbedBuilder embeddedRelease = this.CreateEmbeddedRelease(allReleases.ElementAt(i));
-                latestDiscordReleases.Add(embeddedRelease);
+                foreach (string country in countries)
+                {
+                    List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token, releasesNumber);
+                    allReleases.AddRange(receivedReleases);
+                }
             }
-            return latestDiscordReleases;
-        }
-
-        public EmbedBuilder CreateEmbeddedRelease(Item release)
-        {
-            return new EmbedBuilder()
-                   .WithAuthor(release.artists.First().name)
-                   .WithUrl(release.external_urls.spotify)
-                   .WithColor(Discord.Color.DarkGreen)
-                   .WithDescription($"type: {release.album_type}")
-                   .WithTitle(release.name)
-                   .WithThumbnailUrl(release.images.First().url)
-                   .WithFooter(release.release_date);
+            catch (Exception exception)
+            {
+                //faire une exception perso
+                throw;
+            }
+            return allReleases.DistinctBy(release => release.id).OrderBy(release => release.release_date).Reverse().ToList();
         }
 
         private async Task<SpotifyToken> GetSpotifyToken()
         {
-            var clientId = "";
-            var clientSecret = "";
-            var accessUrl = "https://accounts.spotify.com/api/token";
-            string credentials = String.Format("{0}:{1}", clientId, clientSecret);
+            string clientId = "";
+            string clientSecret = "";
+            string accessUrl = "https://accounts.spotify.com/api/token";
+            this.ConfigureHttpClientResponseType();
+            this.ConfigureHttpClientAuthorization(AuthentificationScheme.Basic, this.GetCredentials(clientId, clientSecret));
 
-            //faire une policy pour gérer les client selon le get token ou selon le reste de spotify
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials)));
+            FormUrlEncodedContent requestBody = this.GetRequestBody();
+            //Request Token
+            var request = await this.HttpClient.PostAsync(accessUrl, requestBody);
+            var response = await request.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<SpotifyToken>(response);
+        }
 
-                FormUrlEncodedContent requestBody = this.GetRequestBody();
-                //Request Token
-                var request = await client.PostAsync(accessUrl, requestBody);
-                var response = await request.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<SpotifyToken>(response);
-            }
+        private string GetCredentials(string clientId, string clientSecret)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(String.Format("{0}:{1}", clientId, clientSecret)));
+        }
+
+        private void ConfigureHttpClientResponseType()
+        {
+            this.HttpClient.DefaultRequestHeaders.Accept.Clear();
+            this.HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        private void ConfigureHttpClientAuthorization( AuthentificationScheme scheme, string parameter )
+        {
+            this.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme.ToString(), parameter);
         }
 
         private async Task<List<Item>> GetLastReleasesByCountry(string country, SpotifyToken token, uint limit)
         {
-            //la limite est aux 50 dernières albums
-            if (limit > 50) limit = 50;
             Uri path = new Uri($"https://api.spotify.com/v1/browse/new-releases?country={country}&limit={(int)limit}");
 
 
-            this.HttpClient.DefaultRequestHeaders.Accept.Clear();
-            this.HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            this.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.access_token);
+            this.ConfigureHttpClientResponseType();
+            this.ConfigureHttpClientAuthorization(AuthentificationScheme.Bearer, token.access_token);
 
             //pour une recherche d'album, il y a ça :
             //https://api.spotify.com/v1/search?q=album%3ARendezvous%20artist%3AJenevieve&type=album&limit=50
@@ -100,30 +99,13 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             return deserializedJson?.albums?.items;
         }
 
-        public async Task<List<Item>> GetAllReleases(uint limit)
-        {
-            SpotifyToken token = await this.GetSpotifyToken();
-            List<Item> allReleases = new List<Item>();
-            try
-            {
-                foreach (string country in countries)
-                {
-                    List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token, limit);
-                    allReleases.AddRange(receivedReleases);
-                }
-            }
-            catch (Exception exception)
-            {
-                //faire une exception perso
-                throw;
-            }
-            return allReleases.DistinctBy(release => release.id).OrderBy(release => release.release_date).Reverse().ToList();
-        }
-
-        public async Task Add(Item release)
+        public async Task AddRelease(Item release)
         {
             await this._albumsRepository.AddAsync(release);
-            Console.WriteLine($"added release ${release.id}");
+            _logger.LogInformation("{datetime} - {service} added a new release to the database : {id}",
+                DateTimeOffset.Now,
+                nameof(SpotifyReleasesService),
+                release.id);
         }
 
         private FormUrlEncodedContent GetRequestBody()
@@ -132,15 +114,6 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             requestData.Add(new KeyValuePair<string, string>("grant_type", "client_credentials"));
             return new FormUrlEncodedContent(requestData);
         }
-
-        public List<string> JustSomeCountries = new List<string>()
-        {
-            "BE",
-            "FR",
-            "US",
-            "JP",
-            "HK"
-        };
 
         public List<string> countries = new List<string>() {           
           "AD",

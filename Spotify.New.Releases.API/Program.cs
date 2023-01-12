@@ -1,23 +1,31 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Spotify.New.Releases.Application.Extensions;
-using Spotify.New.Releases.Infrastructure.Extensions;
-using spotify_new_releases.Extensions;
+using spotify_new_releases;
+using System.Net;
 
 public class Program
 {
     public static void Main(string[] args) => new Program().MainAsync(args).GetAwaiter().GetResult();
 
+    public static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.UseStartup<Startup>()
+                .UseConfiguration(new ConfigurationBuilder().Build())
+                    .UseKestrel(options =>
+                    {
+                        options.Listen(IPAddress.Loopback, 5001);
+                        options.Listen(IPAddress.Loopback, 5002);
+                    })
+                .UseDefaultServiceProvider(options => options.ValidateScopes = false);
+            });
+    }
+
     public async Task MainAsync(string[] args)
     {
-        Action<IServiceCollection> servicesDelegate = services => 
-            services.AddRedisConnection()
-                    .AddInfrastructureRepositories()
-                    .AddApplicationServices()
-                    .AddDiscordBot().Result
-                    .AddCustomOpenApi();
-        IHostBuilder builder = Host.CreateDefaultBuilder(args).ConfigureServices(servicesDelegate);
-        builder.Build().Run();
-        await Task.Delay(-1);
+        CreateHostBuilder(args).Build().Run();
     }
 }

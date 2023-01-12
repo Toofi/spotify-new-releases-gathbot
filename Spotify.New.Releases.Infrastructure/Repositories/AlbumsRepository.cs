@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace Spotify.New.Releases.Infrastructure.Repositories
 {
-    public class AlbumsRepository : IGenericRepository<Item>
+    public class AlbumsRepository : IAlbumsRepository
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer;
         private readonly IDatabase _database;
@@ -55,6 +55,22 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
             {
                 throw new SnrBaseException(nameof(AlbumsRepository), exception);
             }
+        }
+
+        public async Task<Item> GetLatestRelease()
+        {
+            throw new NotImplementedException();
+
+/*            try
+            {
+                retrouver le dernier value
+                RedisValue result = await this._database.ListRightPopAsync();
+            }
+            catch (Exception exception)
+            {
+
+                throw;
+            }*/
         }
 
         public async Task UpdateAsync(Item entity)

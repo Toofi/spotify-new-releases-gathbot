@@ -19,7 +19,7 @@ namespace spotify_new_releases.Extensions
                 GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
             });
 
-            var _discordCommands = new CommandService(new CommandServiceConfig()
+            var _discordCommandsService = new CommandService(new CommandServiceConfig()
             {
                 CaseSensitiveCommands = false,
                 DefaultRunMode = RunMode.Async
@@ -28,9 +28,9 @@ namespace spotify_new_releases.Extensions
             _discordSocketClient.Log += DiscordCommandHandler.Log;
             _discordSocketClient.MessageReceived += HandleCommandAsync;
             _discordSocketClient.Ready += HandleNotificationsAsync;
-            await _discordCommands.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+            await _discordCommandsService.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
 
-            foreach (var module in _discordCommands.Modules)
+            foreach (var module in _discordCommandsService.Modules)
             {
                 Console.WriteLine($"{nameof(DiscordCommandHandler)} | Command '{module.Name}' initialized.");
             }
@@ -54,14 +54,16 @@ namespace spotify_new_releases.Extensions
                 {
                     return;
                 }
-                var result = await _discordCommands.ExecuteAsync(context, DiscordCommandHandler.GetArgPos(), serviceProvider);
+                var result = await _discordCommandsService.ExecuteAsync(context, DiscordCommandHandler.GetArgPos(), serviceProvider);
                 if (!result.IsSuccess)
                 {
                     Console.WriteLine(result.ErrorReason);
                     await context.Channel.SendMessageAsync(result.ErrorReason);
                 }
             }
-            return services.AddSingleton(_discordSocketClient).AddSingleton(_discordCommands);
+            return services
+                //.AddSingleton<SpotifyReleasesDiscordCommand>()
+                .AddSingleton(_discordSocketClient).AddSingleton(_discordCommandsService);
         }
     }
 }

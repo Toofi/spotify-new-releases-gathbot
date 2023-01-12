@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Spotify.New.Releases.Application.Extensions;
 using Spotify.New.Releases.Application.Services.DiscordMessagesService;
 using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 using Spotify.New.Releases.Domain.Models.Spotify;
@@ -13,7 +14,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         private int executionCount = 0;
         private readonly ILogger<SpotifyReleasesBackgroundService> _logger;
         private Timer? _timer = null;
-        private readonly ISpotifyReleasesService _spotifyConnectionService;
+        private readonly ISpotifyReleasesService _spotifyReleasesService;
         private readonly IGenericRepository<Item> _albumsRepository;
         private readonly IDiscordMessagesService _discordMessagesService;
 
@@ -24,7 +25,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
             IDiscordMessagesService discordMessagesService)
         {
             _logger = logger;
-            _spotifyConnectionService = spotifyConnectionService;
+            _spotifyReleasesService = spotifyConnectionService;
             _albumsRepository = albumsRepository;
             _discordMessagesService = discordMessagesService;
         }
@@ -52,7 +53,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         {
             try
             {
-                List<Item> rawReleases = await this._spotifyConnectionService.GetAllReleases();
+                List<Item> rawReleases = await this._spotifyReleasesService.GetLatestReleases();
                 _logger.LogInformation("{datetime} - {service} - Successfully received raw data from Spotify. Number of releases received: {count}",
                     DateTimeOffset.Now,
                     nameof(SpotifyReleasesBackgroundService),
@@ -71,7 +72,6 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
 
         public Task StopAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("SpotifyReleasesBackgroundService is stopping.");
             _logger.LogInformation("{datetime} - {service} is stopping",
                 DateTimeOffset.Now,
                 nameof(SpotifyReleasesBackgroundService));
@@ -90,8 +90,8 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
             {
                 if (!await this.IsReleaseAlreadyExisting(release.id))
                 {
-                    await this._spotifyConnectionService.Add(release);
-                    EmbedBuilder embeddedRelease = this._spotifyConnectionService.CreateEmbeddedRelease(release);
+                    await this._spotifyReleasesService.AddRelease(release);
+                    Embed embeddedRelease = new EmbedBuilder().CreateEmbeddedRelease(release).Build();
                     await this._discordMessagesService.SendEmbeddedMessageToAllGuildsAsync(embeddedRelease);
                 }
             }

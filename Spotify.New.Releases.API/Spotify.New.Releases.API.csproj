@@ -22,4 +22,10 @@
     <ProjectReference Include="..\Spotify.New.Releases.Infrastructure\Spotify.New.Releases.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Profiles\launchSettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
