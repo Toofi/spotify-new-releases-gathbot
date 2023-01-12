@@ -1,16 +1,17 @@
 ﻿using Discord;
 using Discord.Commands;
-using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
+using Spotify.New.Releases.Application.Services.DiscordMessagesService;
 
 namespace Spotify.New.Releases.API.Commands
 {
     public class SpotifyReleasesDiscordCommand : ModuleBase<SocketCommandContext>
     {
-        private ISpotifyReleasesService _spotifyConnectionService { get; set; }
+        private IDiscordMessagesService _discordMessagesService { get; set; }
 
-        public SpotifyReleasesDiscordCommand(ISpotifyReleasesService spotifyConnectionService)
+        public SpotifyReleasesDiscordCommand(IDiscordMessagesService discordMessagesService)
         {
-            this._spotifyConnectionService = spotifyConnectionService;
+            this._discordMessagesService = discordMessagesService;
+
         }
 
         [Command("latest")]
@@ -32,16 +33,15 @@ namespace Spotify.New.Releases.API.Commands
             {
                 await this.GetLatestRelease();
             }
-            var results = await this._spotifyConnectionService.GetLatestReleases(parsedNumber);
-            Embed[] embeddedResults = results.Select(result => result.Build()).ToArray();
-            await Context.Message.ReplyAsync(embeds: embeddedResults);
+            Embed[] embeddedReleases = await this._discordMessagesService.GetLatestEmbeddedReleases(parsedNumber);
+            await Context.Message.ReplyAsync(embeds: embeddedReleases);
         }
 
         private async Task GetLatestRelease()
         {
             await Context.Message.ReplyAsync($"Looking for latest release ...");
-            var result = await this._spotifyConnectionService.GetLatestRelease();
-            await Context.Message.ReplyAsync(embed: result.Build());
+            var result = await this._discordMessagesService.GetLastEmbeddedRelease();
+            await Context.Message.ReplyAsync(embed: result);
         }
     }
 }

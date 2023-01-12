@@ -1,25 +1,23 @@
-﻿using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
-using System.Web.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 
 namespace Spotify.New.Releases.API.Controllers
 {
-    public class SpotifyController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
+    public class SpotifyController : ControllerBase
     {
-        private ISpotifyReleasesService _spotifyConnectionService { get; set; }
-        public SpotifyController(ISpotifyReleasesService spotifyConnectionService)
+        private ISpotifyReleasesService _spotifyReleasesService { get; set; }
+        public SpotifyController(ISpotifyReleasesService spotifyReleasesService)
         {
-            this._spotifyConnectionService = spotifyConnectionService;
-        }
-
-        public async Task GetLatestAlbums()
-        {
-            await this._spotifyConnectionService.GetLatestRelease();
+            this._spotifyReleasesService = spotifyReleasesService;
         }
 
         [HttpGet]
-        public void GetLatestAlbums(string token)
+        public async Task  GetLatestAlbums()
         {
-
+            this._spotifyReleasesService.GetLatestReleases();
         }
     }
 }
