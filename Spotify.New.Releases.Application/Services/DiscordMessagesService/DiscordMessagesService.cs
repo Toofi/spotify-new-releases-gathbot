@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spotify.New.Releases.Application.Extensions;
 using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
@@ -10,12 +11,14 @@ namespace Spotify.New.Releases.Application.Services.DiscordMessagesService
     public class DiscordMessagesService : IDiscordMessagesService
     {
         private readonly DiscordSocketClient _discordSocketClient;
+        private readonly IServiceProvider _provider;
         private readonly ILogger<DiscordMessagesService> _logger;
         private readonly ISpotifyReleasesService _spotifyReleasesService;
 
-        public DiscordMessagesService(DiscordSocketClient discordSocketClient, ILogger<DiscordMessagesService> logger, ISpotifyReleasesService spotifyReleasesService)
+        public DiscordMessagesService(IServiceProvider provider, ILogger<DiscordMessagesService> logger, ISpotifyReleasesService spotifyReleasesService)
         {
-            _discordSocketClient = discordSocketClient;
+            _provider = provider;
+            _discordSocketClient = _provider.GetRequiredService<DiscordSocketClient>();
             _logger = logger;
             _spotifyReleasesService = spotifyReleasesService;
         }

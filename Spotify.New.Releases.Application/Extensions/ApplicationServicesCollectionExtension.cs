@@ -2,6 +2,7 @@
 using Spotify.New.Releases.Application.Services.DiscordMessagesService;
 using Spotify.New.Releases.Application.Services.SpotifyReleasesService;
 using Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundService;
+using Spotify.New.Releases.Application.Handlers;
 
 namespace Spotify.New.Releases.Application.Extensions
 {
@@ -12,7 +13,9 @@ namespace Spotify.New.Releases.Application.Extensions
             return services
                 .AddSingleton<ISpotifyReleasesService, SpotifyReleasesService>()
                 .AddSingleton<IDiscordMessagesService, DiscordMessagesService>()
-                .AddHostedService<SpotifyReleasesBackgroundService>();
+                .AddHostedService<SpotifyReleasesBackgroundService>()
+                .AddHostedService<DiscordBotHandler>()
+                .AddHostedService<DiscordBotCommandHandler>();
         }
     }
 }
