@@ -3,6 +3,7 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Spotify.New.Releases.Application.Extensions;
 using Spotify.New.Releases.Application.Handlers;
@@ -15,15 +16,17 @@ namespace spotify_new_releases
     {
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
+            services.AddHttpContextAccessor();
             services.AddDiscordSocketClient().AddDiscordCommandService();
-
-
             services.AddRedisConnection()
                     .AddInfrastructureRepositories()
                     .AddApplicationServices()
                     .AddDiscordSocketClient()
                     .AddCustomOpenApi();
-
             services.AddControllers();
         }
 

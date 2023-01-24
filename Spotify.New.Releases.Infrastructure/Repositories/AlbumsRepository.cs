@@ -36,10 +36,14 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-        public async Task<IReadOnlyList<Item>> GetAllAsync()
+        public async Task GetAllAsync()
         {
-            RedisResult result = await this._database.ExecuteAsync("scan", "0");
-            throw new NotImplementedException();
+            RedisResult result = await this._database.ExecuteAsync("scan", "0 COUNT 100");
+            RedisResult values = result.ToDictionary().FirstOrDefault().Value;
+            string values2 = values.ToDictionary().FirstOrDefault().Key;
+            Item item = await this.GetByIdAsync(values2);
+            Console.WriteLine("coucou");
+            //this._database.ListRangeAsync()
         }
 
         public async Task<Item> GetByIdAsync(string id)
@@ -59,18 +63,18 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
 
         public async Task<Item> GetLatestRelease()
         {
-            throw new NotImplementedException();
-
-/*            try
+            try
             {
-                retrouver le dernier value
-                RedisValue result = await this._database.ListRightPopAsync();
+                await this.GetAllAsync();
+                RedisValue result = new RedisValue();
+                if (!result.HasValue) return null;
+                if (result.HasValue) return this.Convert(result);
+                throw new SnrBaseException(nameof(AlbumsRepository));
             }
             catch (Exception exception)
             {
-
-                throw;
-            }*/
+                throw new SnrBaseException(nameof(AlbumsRepository), exception);
+            }
         }
 
         public async Task UpdateAsync(Item entity)
