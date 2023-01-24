@@ -28,15 +28,22 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             return latestRelease ?? null;
         }
 
+        public async Task<List<Item>> GetNumberedLatestReleases(uint releasesNumber = 50)
+        {
+            List<Item> latestReleases = await this.GetLatestReleases();
+            return latestReleases.Take((int)releasesNumber).ToList();
+        }
+
         public async Task<List<Item>> GetLatestReleases(uint releasesNumber = 50)
         {
+            if (releasesNumber == 0) releasesNumber = 1;
             SpotifyToken token = await this.GetSpotifyToken();
             List<Item> allReleases = new List<Item>();
             try
             {
                 foreach (string country in countries)
                 {
-                    List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token, releasesNumber);
+                    List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token);
                     allReleases.AddRange(receivedReleases);
                 }
             }
@@ -79,7 +86,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             this.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme.ToString(), parameter);
         }
 
-        private async Task<List<Item>> GetLastReleasesByCountry(string country, SpotifyToken token, uint limit)
+        private async Task<List<Item>> GetLastReleasesByCountry(string country, SpotifyToken token, uint limit = 50)
         {
             Uri path = new Uri($"https://api.spotify.com/v1/browse/new-releases?country={country}&limit={(int)limit}");
 

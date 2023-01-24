@@ -10,7 +10,7 @@ namespace Spotify.New.Releases.Application.Interfaces
         /// <returns></returns>
         public Task<Item> GetLatestRelease();
         /// <summary>
-        /// Get the latest releases found, last 50 by default if not specified in parameter.
+        /// Get all the latest releases found, last 50 by country by default if not specified in parameter.
         /// </summary>
         /// <param name="releasesNumber"></param>
         /// <returns></returns>
