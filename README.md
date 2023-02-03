@@ -3,4 +3,4 @@ Spotify New Releases is a webapp, with the purpose to retrieve and serve every l
 For the moment, there is only a **Discord** bot, but there can be many ways to be notified!
 
  - [Twitter](https://twitter.com/90Toofi) 
- - [Linktree](linktr.ee/90toofi)
+ - [Linktree](https://linktr.ee/90toofi)
