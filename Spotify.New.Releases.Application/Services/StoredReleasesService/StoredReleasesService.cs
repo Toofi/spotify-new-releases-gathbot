@@ -17,7 +17,7 @@ namespace Spotify.New.Releases.Application.Services.StoredReleasesService
             return await this._albumsRepository.GetLatestRelease();
         }
 
-        public Task<List<Item>> GetLatestReleases(uint releasesNumber = 50)
+        public Task<List<Item>> GetLatestReleases(uint releasesNumber)
         {
             throw new NotImplementedException();
         }

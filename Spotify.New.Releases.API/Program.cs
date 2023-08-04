@@ -11,6 +11,10 @@ public class Program
     public static IHostBuilder CreateHostBuilder(string[] args)
     {
         return Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration(app =>
+            {
+                app.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            })
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 webBuilder.UseStartup<Startup>()

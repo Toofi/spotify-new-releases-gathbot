@@ -53,7 +53,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesBackgroundSer
         {
             try
             {
-                List<Item> rawReleases = await this._spotifyReleasesService.GetLatestReleases();
+                List<Item> rawReleases = await this._spotifyReleasesService.GetLatestReleases(50);
                 _logger.LogInformation("{datetime} - {service} - Successfully received raw data from Spotify. Number of releases received: {count}",
                     DateTimeOffset.Now,
                     nameof(SpotifyReleasesBackgroundService),

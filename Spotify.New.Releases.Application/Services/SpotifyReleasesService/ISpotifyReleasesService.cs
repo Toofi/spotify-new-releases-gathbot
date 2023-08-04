@@ -11,6 +11,6 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
         /// </summary>
         /// <param name="releasesNumber"></param>
         /// <returns></returns>
-        public Task<List<Item>> GetNumberedLatestReleases(uint releasesNumber = 50);
+        public Task<List<Item>> GetNumberedLatestReleases(uint releasesNumber);
     }
 }

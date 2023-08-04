@@ -34,8 +34,12 @@ namespace Spotify.New.Releases.API.Controllers
         [HttpGet("{limitNumber}")]
         public async Task<ActionResult<string>> GetLatestReleases(string limitNumber)
         {
-            bool parsingResult = uint.TryParse(limitNumber, out uint parsedNumber);
-            List<Item> results = await this._spotifyReleasesService.GetNumberedLatestReleases(parsedNumber);
+            bool isParsed = uint.TryParse(limitNumber, out uint parsedNumber);
+            if(!isParsed)
+            {
+                return this.BadRequest();
+            }
+            List<Item> results = await this._spotifyReleasesService.GetNumberedLatestReleases(parsedNumber != 0 ? parsedNumber : 50);
             return this.Ok(results);
         }
     }

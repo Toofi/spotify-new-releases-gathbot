@@ -5,15 +5,17 @@ using System.Text.Json;
 
 namespace Spotify.New.Releases.Infrastructure.Repositories
 {
-    public class AlbumsRepository : IAlbumsRepository
+    public class AlbumsRedisRepository : IAlbumsRepository
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer;
         private readonly IDatabase _database;
-        public AlbumsRepository(IConnectionMultiplexer connectionMultiplexer)
+
+        public AlbumsRedisRepository(IConnectionMultiplexer connectionMultiplexer)
         {
             _connectionMultiplexer = connectionMultiplexer;
             this._database = this._connectionMultiplexer.GetDatabase();
         }
+
         public async Task AddAsync(Item entity)
         {
             try
@@ -22,12 +24,12 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
                 bool result = await this._database.StringSetAsync(entity.id, value);
                 if (result == false)
                 {
-                    throw new SnrBaseException(nameof(AlbumsRepository));
+                    throw new SnrBaseException(nameof(AlbumsRedisRepository));
                 }
             }
             catch (Exception exception)
             {
-                throw new SnrBaseException(nameof(AlbumsRepository), exception);
+                throw new SnrBaseException(nameof(AlbumsRedisRepository), exception);
             }
         }
 
@@ -53,11 +55,11 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
                 RedisValue result = await this._database.StringGetAsync(id);
                 if (!result.HasValue) return null;
                 if (result.HasValue) return this.Convert(result);
-                throw new SnrBaseException(nameof(AlbumsRepository));
+                throw new SnrBaseException(nameof(AlbumsRedisRepository));
             }
             catch (Exception exception)
             {
-                throw new SnrBaseException(nameof(AlbumsRepository), exception);
+                throw new SnrBaseException(nameof(AlbumsRedisRepository), exception);
             }
         }
 
@@ -69,11 +71,11 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
                 RedisValue result = new RedisValue();
                 if (!result.HasValue) return null;
                 if (result.HasValue) return this.Convert(result);
-                throw new SnrBaseException(nameof(AlbumsRepository));
+                throw new SnrBaseException(nameof(AlbumsRedisRepository));
             }
             catch (Exception exception)
             {
-                throw new SnrBaseException(nameof(AlbumsRepository), exception);
+                throw new SnrBaseException(nameof(AlbumsRedisRepository), exception);
             }
         }
 
@@ -84,14 +86,14 @@ namespace Spotify.New.Releases.Infrastructure.Repositories
 
         private Item Convert(string stringifiedJson)
         {
-            if (String.IsNullOrWhiteSpace(stringifiedJson)) throw new SnrBaseException(nameof(AlbumsRepository));
+            if (String.IsNullOrWhiteSpace(stringifiedJson)) throw new SnrBaseException(nameof(AlbumsRedisRepository));
             try
             {
                 return JsonSerializer.Deserialize<Item>(stringifiedJson);
             }
             catch (Exception exception)
             {
-                throw new SnrBaseException(nameof(AlbumsRepository), exception);
+                throw new SnrBaseException(nameof(AlbumsRedisRepository), exception);
             }
         }
     }
