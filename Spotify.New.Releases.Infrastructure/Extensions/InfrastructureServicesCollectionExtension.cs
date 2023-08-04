@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using Spotify.New.Releases.Domain.Models.Spotify;
 using Spotify.New.Releases.Infrastructure.Repositories;
-using StackExchange.Redis;
 
 namespace Spotify.New.Releases.Infrastructure.Extensions
 {
@@ -10,21 +10,25 @@ namespace Spotify.New.Releases.Infrastructure.Extensions
         public static IServiceCollection AddInfrastructureRepositories(this IServiceCollection services)
         {
             return services
-                .AddSingleton<IAlbumsRepository, AlbumsRepository>()
-                .AddScoped<IGenericRepository<Item>, AlbumsRepository>();
+                .AddSingleton<IAlbumsRepository, AlbumsMongoRepository>()
+                .AddScoped<IGenericRepository<Item>, AlbumsMongoRepository>();
         }
 
-        public static IServiceCollection AddRedisConnection(this IServiceCollection services)
+        public static IServiceCollection AddMongoConnection(this IServiceCollection services, string connectionString)
         {
-            ConnectionMultiplexer redisConnection = ConnectionMultiplexer.Connect(
-                new ConfigurationOptions
-                {
-                    EndPoints = { "redis-16050.c269.eu-west-1-3.ec2.cloud.redislabs.com:16050" },
-                    Password = "",
-                    User = "default",
-                    AbortOnConnectFail = false,
-                });
-            return services.AddSingleton<IConnectionMultiplexer>(redisConnection);
+            var client = new MongoClient(connectionString);
+            try
+            {
+                client.StartSession();
+                var database = client.GetDatabase("releases");
+                Console.WriteLine("connection to MongoDb well-established");
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Connection failed: {exception.Message}");
+                throw;
+            }
+            return services.AddSingleton<IMongoClient>(new MongoClient(connectionString));
         }
     }
 }

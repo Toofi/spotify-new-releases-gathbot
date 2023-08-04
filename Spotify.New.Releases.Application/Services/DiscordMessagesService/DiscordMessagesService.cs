@@ -58,7 +58,7 @@ namespace Spotify.New.Releases.Application.Services.DiscordMessagesService
 
         public async Task<Embed[]> GetLatestEmbeddedReleases(uint releasesNumber)
         {
-            List<Item> latestReleases = await this._spotifyReleasesService.GetLatestReleases(releasesNumber);
+            List<Item> latestReleases = await this._spotifyReleasesService.GetLatestReleases(releasesNumber != 0 ? releasesNumber : 50);
             List<Embed> embeddedReleases = new List<Embed>();
             foreach(Item release in latestReleases)
             {

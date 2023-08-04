@@ -11,7 +11,6 @@ namespace Spotify.New.Releases.Application.Handlers
         {
             this._client = client;
             this._client.SlashCommandExecuted += SlashCommandHandler;
-
         }
 
         public async Task SlashCommandHandler(SocketSlashCommand command)

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Spotify.New.Releases.Domain.Enums;
 using Spotify.New.Releases.Domain.Models.Spotify;
 using Spotify.New.Releases.Infrastructure.Repositories;
@@ -13,12 +14,14 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
         private readonly HttpClient HttpClient;
         private readonly IGenericRepository<Item> _albumsRepository;
         private readonly ILogger<SpotifyReleasesService> _logger;
+        private readonly IConfiguration _configuration;
 
-        public SpotifyReleasesService(IGenericRepository<Item> albumsRepository, ILogger<SpotifyReleasesService> logger)
+        public SpotifyReleasesService(IGenericRepository<Item> albumsRepository, ILogger<SpotifyReleasesService> logger, IConfiguration configuration)
         {
             this.HttpClient = new HttpClient();
             this._albumsRepository = albumsRepository;
             this._logger = logger;
+            this._configuration = configuration;
         }
 
         public async Task<Item> GetLatestRelease()
@@ -28,15 +31,14 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             return latestRelease ?? null;
         }
 
-        public async Task<List<Item>> GetNumberedLatestReleases(uint releasesNumber = 50)
+        public async Task<List<Item>> GetNumberedLatestReleases(uint releasesNumber)
         {
-            List<Item> latestReleases = await this.GetLatestReleases();
+            List<Item> latestReleases = await this.GetLatestReleases(releasesNumber);
             return latestReleases.Take((int)releasesNumber).ToList();
         }
 
-        public async Task<List<Item>> GetLatestReleases(uint releasesNumber = 50)
+        public async Task<List<Item>> GetLatestReleases(uint releasesNumber)
         {
-            if (releasesNumber == 0) releasesNumber = 1;
             SpotifyToken token = await this.GetSpotifyToken();
             List<Item> allReleases = new List<Item>();
             try
@@ -44,7 +46,10 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
                 foreach (string country in countries)
                 {
                     List<Item> receivedReleases = await this.GetLastReleasesByCountry(country, token);
-                    allReleases.AddRange(receivedReleases);
+                    if (receivedReleases != null)
+                    {
+                        allReleases.AddRange(receivedReleases);
+                    }
                 }
             }
             catch (Exception exception)
@@ -57,15 +62,16 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
 
         private async Task<SpotifyToken> GetSpotifyToken()
         {
-            string clientId = "";
-            string clientSecret = "";
-            string accessUrl = "https://accounts.spotify.com/api/token";
+            string clientId = this._configuration.GetSection("SpotifyTokens").GetValue<string>("clientId");
+            string clientSecret = this._configuration.GetSection("SpotifyTokens").GetValue<string>("clientSecret");
+            string url = this._configuration.GetSection("SpotifyTokens").GetValue<string>("url");
+
             this.ConfigureHttpClientResponseType();
             this.ConfigureHttpClientAuthorization(AuthentificationScheme.Basic, this.GetCredentials(clientId, clientSecret));
 
             FormUrlEncodedContent requestBody = this.GetRequestBody();
             //Request Token
-            var request = await this.HttpClient.PostAsync(accessUrl, requestBody);
+            var request = await this.HttpClient.PostAsync(url, requestBody);
             var response = await request.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<SpotifyToken>(response);
         }
@@ -81,7 +87,7 @@ namespace Spotify.New.Releases.Application.Services.SpotifyReleasesService
             this.HttpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        private void ConfigureHttpClientAuthorization( AuthentificationScheme scheme, string parameter )
+        private void ConfigureHttpClientAuthorization(AuthentificationScheme scheme, string parameter)
         {
             this.HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme.ToString(), parameter);
         }

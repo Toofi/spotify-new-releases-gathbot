@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Spotify.New.Releases.Application.Extensions;
 using Spotify.New.Releases.Application.Handlers;
@@ -14,15 +15,23 @@ namespace spotify_new_releases
 {
     public class Startup
     {
+        private IConfiguration _configuration { get; set; }
+
+        public Startup(IConfiguration configuration)
+        {
+            this._configuration = configuration;
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<KestrelServerOptions>(options =>
             {
                 options.AllowSynchronousIO = true;
             });
+
             services.AddHttpContextAccessor();
             services.AddDiscordSocketClient().AddDiscordCommandService();
-            services.AddRedisConnection()
+            services.AddMongoConnection(this._configuration.GetConnectionString("MongoDb") ?? "")
                     .AddInfrastructureRepositories()
                     .AddApplicationServices()
                     .AddDiscordSocketClient()
@@ -37,13 +46,13 @@ namespace spotify_new_releases
             var discordCommandService = services.GetRequiredService<CommandService>();
 
             //loggin
-            discordSocketClient.LoginAsync(TokenType.Bot, "").GetAwaiter().GetResult();
+            discordSocketClient.LoginAsync(TokenType.Bot, this._configuration.GetSection("DiscordBot").GetValue<string>("token")).GetAwaiter().GetResult();
             discordSocketClient.StartAsync().GetAwaiter().GetResult();
 
             //config
             discordSocketClient.Log += DiscordBotLoggingHandler.Log;
 
-        app.UseSwagger();
+            app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Spotify New Releases API");
